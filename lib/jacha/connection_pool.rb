@@ -47,7 +47,7 @@ module Jacha
     end
 
     def respawn
-      pool.delete_if &:marked?
+      pool.delete_if &:broken?
       spawn @size - pool.size
     end
 
@@ -58,6 +58,14 @@ module Jacha
 
     def fix_charset!
       require_relative '../xmpp4r_monkeypatch'
+    end
+
+    def self.method_missing(sym, *args, &block)
+      if instance.respond_to? sym
+        instance.send(sym, *args, &block)
+      else
+        super
+      end
     end
   end
 end

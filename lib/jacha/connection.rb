@@ -10,8 +10,8 @@ module Jacha
       @password = password
       @jabber = Jabber::Client.new "#{jid}/#{Time.now.to_f}"
       @jabber.on_exception do
-        unless marked?
-          mark!
+        unless broken?
+          broken!
           logger.warn "#{Time.now}: broken XmppConnection: #{self}"
           destroy
           pool.respawn
@@ -46,7 +46,7 @@ module Jacha
       @jabber.is_connected?
     end
 
-    def online?(jid, timeout=4)
+    def online?(jid, timeout=1.5)
       # Only works if our bot is authorized by the given JID
       # see Presence with type :subscribe for more details
       # Also, bot should be online by itself
@@ -81,12 +81,12 @@ module Jacha
       mark!
     end
 
-    def mark!
-      @marked = true
+    def broken!
+      @broken = true
     end
 
-    def marked?
-      @marked
+    def broken?
+      @broken
     end
 
     def logger

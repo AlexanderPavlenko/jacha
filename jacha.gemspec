@@ -7,16 +7,15 @@ Gem::Specification.new do |s|
   s.version     = Jacha::VERSION
   s.authors     = ["AlexanderPavlenko"]
   s.email       = ["a.pavlenko@roundlake.ru"]
-  s.homepage    = ""
-  s.summary     = %q{TODO: Write a gem summary}
-  s.description = %q{TODO: Write a gem description}
+  s.homepage    = "http://github.com/roundlake/jacha"
+  s.summary     = %q{Simple xmpp4r bot}
+  s.description = %q{xmpp4r bot that can be included to project as well as started as a standalone service}
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 
-  # specify any dependencies here; for example:
   # s.add_development_dependency "rspec"
   s.add_runtime_dependency "xmpp4r"
 end

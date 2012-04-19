@@ -76,9 +76,9 @@ module Jacha
     end
 
     def destroy
+      broken!
       @pinger.kill
       @jabber.close
-      mark!
     end
 
     def broken!

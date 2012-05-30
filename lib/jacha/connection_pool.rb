@@ -25,7 +25,7 @@ module Jacha
         logger.warn "#{Time.now}: Spawning XmppConnection"
         spawner = Thread.new do
           begin
-            connection = Connection.new @jid, @password
+            connection = Connection.new @jid, @password, self
             spawner[:connection] = connection
           rescue => ex
             logger.warn "#{Time.now}: Error on XmppConnection spawn: #{ex}"
@@ -35,7 +35,6 @@ module Jacha
         connection = spawner[:connection]
         spawner.kill
         if connection && connection.connected?
-          connection.pool = self
           pool << connection
           logger.warn "#{Time.now}: XmppConnection spawned: #{connection}"
         else

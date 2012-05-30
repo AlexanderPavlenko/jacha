@@ -6,15 +6,16 @@ module Jacha
     attr_reader :jabber
     attr_accessor :pool
 
-    def initialize(jid, password)
+    def initialize(jid, password, pool=nil)
       @password = password
       @jabber = Jabber::Client.new "#{jid}/#{Time.now.to_f}"
+      @pool = pool
       @jabber.on_exception do
         unless broken?
           broken!
           logger.warn "#{Time.now}: broken XmppConnection: #{self}"
           destroy
-          pool.respawn
+          @pool.respawn if @pool
         end
       end
       connect!
@@ -90,7 +91,7 @@ module Jacha
     end
 
     def logger
-      pool.logger
+      @pool && @pool.logger || (@logger ||= Logger.new(STDOUT))
     end
   end
 end

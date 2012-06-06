@@ -3,37 +3,34 @@ require 'xmpp4r'
 module Jacha
   class Connection
 
-    attr_reader :jabber
-    attr_accessor :pool
+    attr_reader :jabber, :pool
 
     def initialize(jid, password, pool=nil)
       @password = password
       @jabber = Jabber::Client.new "#{jid}/#{Time.now.to_f}"
       @pool = pool
-      @jabber.on_exception do
+      @jabber.on_exception do |ex, stream, place|
         unless broken?
           broken!
-          logger.warn "#{Time.now}: broken XmppConnection: #{self}"
+          logger.warn "#{Time.now}: broken XmppConnection: #{self}: #{ex} at #{place}"
           destroy
           @pool.respawn if @pool
         end
       end
-      connect!
+    end
+
+    def connect!
+      jabber_connect!
       @pinger = Thread.new do
         while true
           if connected?
             sleep 180
             online!
           else
-            connect!
+            jabber_connect!
           end
         end
       end
-    end
-
-    def connect!
-      @jabber.connect
-      @jabber.auth @password
       online!
     end
 
@@ -78,8 +75,8 @@ module Jacha
 
     def destroy
       broken!
-      @pinger.kill
-      @jabber.close
+      @pinger.kill if @pinger
+      @jabber.close if @jabber
     end
 
     def broken!
@@ -92,6 +89,11 @@ module Jacha
 
     def logger
       @pool && @pool.logger || (@logger ||= Logger.new(STDOUT))
+    end
+
+    def jabber_connect!
+      @jabber.connect
+      @jabber.auth @password
     end
   end
 end

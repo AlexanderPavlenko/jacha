@@ -2,11 +2,7 @@ module Jacha
   class ConnectionPool
     include Singleton
 
-    attr_accessor :jid, :password, :size, :logger
-
-    def pool
-      @connections ||= []
-    end
+    attr_accessor :jid, :password, :size, :logger, :retry_delay, :connect_timeout
 
     def size
       @size ||= 3
@@ -14,6 +10,18 @@ module Jacha
 
     def logger
       @logger ||= Logger.new(STDOUT)
+    end
+
+    def retry_delay
+      @retry_delay ||= 7
+    end
+
+    def connect_timeout
+      @connect_timeout ||= 7
+    end
+
+    def pool
+      @connections ||= []
     end
 
     def get_connection
@@ -26,20 +34,21 @@ module Jacha
         spawner = Thread.new do
           begin
             connection = Connection.new @jid, @password, self
+            connection.connect!
             spawner[:connection] = connection
           rescue => ex
             logger.warn "#{Time.now}: Error on XmppConnection spawn: #{ex}"
           end
         end
-        spawner.join 7
+        spawner.join connect_timeout
         connection = spawner[:connection]
         spawner.kill
         if connection && connection.connected?
-          pool << connection
+          pool.push connection
           logger.warn "#{Time.now}: XmppConnection spawned: #{connection}"
         else
-          logger.warn "#{Time.now}: XmppConnection spawn failed. Retrying in 7 seconds."
-          sleep 7
+          logger.warn "#{Time.now}: XmppConnection spawn failed. Retrying in #{retry_delay} seconds."
+          sleep retry_delay
           spawn 1
         end
       end
@@ -47,7 +56,7 @@ module Jacha
 
     def respawn
       pool.delete_if &:broken?
-      spawn @size - pool.size
+      spawn size - pool.size
     end
 
     def destroy

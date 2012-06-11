@@ -2,4 +2,6 @@
 .bundle
 Gemfile.lock
 pkg/*
-jacha.rb
+log
+tmp
+jacha_config.rb

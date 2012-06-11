@@ -1,5 +1,6 @@
 require 'logger'
 require 'sinatra'
+require 'trinidad'
 
 module Jacha
   class Server < Sinatra::Application

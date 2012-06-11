@@ -1,99 +1,51 @@
-require 'xmpp4r'
+if RUBY_PLATFORM.include? 'java'
+  require 'jacha/xmpp_adapter/smack'
+else
+  require 'jacha/xmpp_adapter/xmpp4r'
+end
+
+require 'forwardable'
 
 module Jacha
   class Connection
+    extend Forwardable
 
-    attr_reader :jabber, :pool
+    SERVER_PING_DELAY = 59
+
+    attr_reader :adapter,
+                :pool,
+                :logger
+
+    delegate [ :connect!,
+               :auth!,
+               :present!,
+               :stay_alive!,
+               :destroy,
+               :connected?,
+               :broken?
+             ] => :@adapter
 
     def initialize(jid, password, pool=nil)
-      @password = password
-      @jabber = Jabber::Client.new "#{jid}/#{Time.now.to_f}"
       @pool = pool
-      @jabber.on_exception do |ex, stream, place|
-        unless broken?
-          broken!
-          logger.warn "#{Time.now}: broken XmppConnection: #{self}: #{ex} at #{place}"
-          destroy
-          @pool.respawn if @pool
-        end
+      @adapter = ConnectionAdapter.new(jid, password)
+      @adapter.on_exception do |ex|
+        logger.warn "#{Time.now}: broken XmppConnection: #{self}: #{ex}"
+        destroy
+        @pool.respawn if @pool
       end
     end
 
-    def connect!
-      jabber_connect!
-      @pinger = Thread.new do
-        while true
-          if connected?
-            sleep 180
-            online!
-          else
-            jabber_connect!
-          end
-        end
-      end
-      online!
-    end
+    def online!
+      connect!
+      auth!
+      present!
+      stay_alive!
 
-    def online!(&block)
-      packet = Jabber::Presence.new
-      packet.from = @jabber.jid
-      @jabber.send packet, &block
-    end
-
-    def connected?
-      @jabber.is_connected?
-    end
-
-    def online?(jid, timeout=1.5)
-      # Only works if our bot is authorized by the given JID
-      # see Presence with type :subscribe for more details
-      # Also, bot should be online by itself
-      jid = Jabber::JID.new(jid)
-      pinger = Thread.new do
-        pinger[:online] = nil
-        packet = Jabber::Presence.new
-        packet.to = jid
-        packet.from = @jabber.jid
-        packet.type = :probe
-        @jabber.send(packet) do |presence|
-          from = Jabber::JID.new presence.from
-          if from.node == jid.node && from.domain == jid.domain
-            if presence.type.nil?
-              pinger[:online] = true
-              pinger.stop
-            elsif presence.type == :error
-              pinger.stop
-            end
-          end
-        end
-      end
-      pinger.join timeout
-      result = pinger[:online]
-      pinger.kill
-      result
-    end
-
-    def destroy
-      broken!
-      @pinger.kill if @pinger
-      @jabber.close if @jabber
-    end
-
-    def broken!
-      @broken = true
-    end
-
-    def broken?
-      @broken
+      self
     end
 
     def logger
-      @pool && @pool.logger || (@logger ||= Logger.new(STDOUT))
-    end
-
-    def jabber_connect!
-      @jabber.connect
-      @jabber.auth @password
+      pool && pool.logger || (@logger ||= Logger.new(STDOUT))
     end
   end
 end

@@ -1,4 +1,4 @@
-if RUBY_VERSION >= '1.9'
+if RUBY_VERSION >= '1.9' && !RUBY_PLATFORM.include?('java')
   # Encoding patch
   # see https://github.com/ln/xmpp4r/issues/3#issuecomment-1739952
   require 'socket'

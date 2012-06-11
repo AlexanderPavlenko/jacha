@@ -1,5 +1,4 @@
 require 'jacha/version'
-require 'jacha/connection'
 require 'jacha/connection_pool'
 
 module Jacha

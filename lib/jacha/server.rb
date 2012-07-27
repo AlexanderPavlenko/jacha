@@ -1,6 +1,5 @@
 require 'logger'
 require 'sinatra'
-require 'trinidad'
 
 module Jacha
   class Server < Sinatra::Application
@@ -11,9 +10,15 @@ module Jacha
     end
 
     get '/check' do
-      checker = ConnectionPool.instance.get_connection
-      result = checker.online? params['jid']
-      "#{!!result}"
+      client = ConnectionPool.instance.get_connection
+      result = client.online? params['jid']
+      "{result:#{!!result}}"
+    end
+
+    get '/subscribe_to' do
+      client = ConnectionPool.instance.get_connection
+      client.subscribe_to! params['jid']
+      "{}"
     end
   end
 end

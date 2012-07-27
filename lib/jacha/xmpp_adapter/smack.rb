@@ -71,33 +71,15 @@ module Jacha
     end
 
     def ping_server!
-      packet =  Smack::Packet::IQ.new
-      packet.setType Smack::Packet::IQ::Type::GET
-      packet.addExtension IQPingPacketExtensionImpl.new
-      @client.sendPacket packet
-
       self
     end
 
     def stay_alive!
-      unless @pinger && @pinger.alive?
-        @pinger = Thread.new do
-          while true
-            if connected?
-              ping_server!
-              sleep Connection::SERVER_PING_DELAY
-            else
-              # Smack::ReconnectionManager should handle this case
-            end
-          end
-        end
-      end
-
       self
     end
 
     def subscribe_to!(jid)
-      @client.getRoster.createEntry jid, jid
+      @client.getRoster.createEntry jid, jid, []
     end
 
     def online?(jid)
@@ -130,22 +112,6 @@ module Jacha
 
     def broken!
       @broken = true
-    end
-
-    class IQPingPacketExtensionImpl
-      include Smack::Packet::PacketExtension
-
-      def getElementName
-        'ping'
-      end
-
-      def getNamespace()
-        'urn:xmpp:ping'
-      end
-
-      def toXML()
-        '<ping xmlns="urn:xmpp:ping"/>'
-      end
     end
   end
 end

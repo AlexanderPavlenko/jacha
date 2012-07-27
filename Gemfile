@@ -4,4 +4,4 @@ source "http://rubygems.org"
 gemspec
 
 gem 'jacha', :path => '.'
-gem 'xmpp4r', :require => false
+# gem 'xmpp4r', :require => false

@@ -1,10 +1,13 @@
-require 'singleton'
 require 'jacha/connection'
 require 'jacha/connection_spawner'
 
 module Jacha
   class ConnectionPool
-    include Singleton
+
+    def self.instance(name=nil)
+      @@instances ||= {}
+      @@instances[name && name.to_sym] ||= self.new
+    end
 
     attr_accessor :jid,
                   :password,
@@ -56,7 +59,7 @@ module Jacha
     end
 
     def fix_charset!
-      require 'lib/jacha/xmpp_adapter/xmpp4r_monkeypatch'
+      require File.expand_path('../xmpp_adapter/xmpp4r_monkeypatch', __FILE__)
     end
 
     def self.method_missing(sym, *args, &block)

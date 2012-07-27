@@ -22,7 +22,9 @@ module Jacha
                :stay_alive!,
                :destroy,
                :connected?,
-               :broken?
+               :broken?,
+               :subscribe_to!,
+               :online?
              ] => :@adapter
 
     def initialize(jid, password, pool=nil)

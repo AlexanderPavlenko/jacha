@@ -1,4 +1,5 @@
 require 'xmpp4r'
+require 'xmpp4r/roster/helper/roster'
 
 module Jacha
   class ConnectionAdapter
@@ -55,9 +56,9 @@ module Jacha
       unless @pinger && @pinger.alive?
         @pinger = Thread.new do
           while true
+            sleep Connection::SERVER_PING_DELAY
             if connected?
               ping_server!
-              sleep Connection::SERVER_PING_DELAY
             else
               connect!
             end
@@ -69,11 +70,11 @@ module Jacha
     end
 
     def subscribe_to!(jid)
-      @client.getRoster.createEntry jid, jid
+      @roster.add jid, jid, true
     end
 
     def online?(jid)
-      @roster[jid].online?
+      @roster[jid] && @roster[jid].online?
     end
 
     def destroy
